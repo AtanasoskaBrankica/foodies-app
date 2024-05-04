@@ -102,26 +102,84 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  console.log('confirmPassword', confirmPassword);
   //   const [isLoading, setIsLoading] = useState(false);
 
   //   const navigate = useNavigate();
   const router = useRouter();
 
+  const validateEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setEmailError('Email is required');
+      return false;
+    } else if (!emailRegex.test(email)) {
+      setEmailError('Enter a valid email address (e.g., example@example.com)');
+      return false;
+    } else {
+      setEmailError('');
+      return true;
+    }
+  };
+
+  const validatePassword = () => {
+    const passwordRegex =
+      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
+    if (!password) {
+      setPasswordError('Password is required');
+      return false;
+    } else if (!passwordRegex.test(password)) {
+      setPasswordError(
+        'Password must contain at least 8 characters, including at least one uppercase letter, one lowercase letter, one digit, and one special character '
+      );
+      return false;
+    } else {
+      setPasswordError('');
+      return true;
+    }
+  };
+
+  const validateConfirmPassword = () => {
+    if (!confirmPassword) {
+      setConfirmPasswordError('Confirm password is required');
+      return false;
+    } else if (confirmPassword !== password) {
+      setConfirmPasswordError('Passwords do not match');
+      return false;
+    } else {
+      setConfirmPasswordError('');
+      return true;
+    }
+  };
+
   const registerHandler = event => {
     event.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-    }
+    // if (password !== confirmPassword) {
+    //   toast.error('Passwords do not match');
+    // }
     // setIsLoading(true);
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(userCredential => {
-        const user = userCredential.user;
-        toast.success('Registration was successful');
-        router.push('/login');
-      })
-      .catch(error => {
-        toast.error(error.message);
-      });
+
+    const isEmailValid = validateEmail();
+    const isPasswordValid = validatePassword();
+    const isConfirmPasswordValid = validateConfirmPassword();
+
+    if (!isEmailValid && !isPasswordValid && !isConfirmPasswordValid) {
+      return;
+    } else {
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(userCredential => {
+          const user = userCredential.user;
+          toast.success('Registration was successful');
+          router.push('/login');
+        })
+        .catch(error => {
+          toast.error(error.message);
+        });
+    }
+
     // setIsLoading(false);
   };
 
@@ -146,22 +204,62 @@ const Register = () => {
                   placeholder="Email"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
-                  required
                 />
+                {emailError !== '' && (
+                  <p
+                    style={{
+                      margin: '0',
+                      color: 'red',
+                      // marginRight: '11rem',
+                      fontSize: '0.8rem',
+                      marginTop: '-10px',
+                      paddingBottom: '5px',
+                    }}
+                  >
+                    {emailError}
+                  </p>
+                )}
                 <Input
                   type="password"
                   placeholder="Password"
-                  required
                   value={password}
                   onChange={event => setPassword(event.target.value)}
                 />
+                {passwordError !== '' && (
+                  <p
+                    style={{
+                      margin: '0',
+                      color: 'red',
+                      // marginRight: '10rem',
+
+                      fontSize: '0.8rem',
+                      marginTop: '-10px',
+                      paddingBottom: '5px',
+                    }}
+                  >
+                    {passwordError}
+                  </p>
+                )}
                 <Input
                   type="password"
                   placeholder="Confirm Password"
-                  required
                   value={confirmPassword}
                   onChange={event => setConfirmPassword(event.target.value)}
                 />
+                {confirmPasswordError !== '' && (
+                  <p
+                    style={{
+                      margin: '0',
+                      color: 'red',
+
+                      fontSize: '0.8rem',
+                      marginTop: '-10px',
+                      paddingBottom: '5px',
+                    }}
+                  >
+                    {confirmPasswordError}
+                  </p>
+                )}
                 <AuthButton type="submit" background="#ffae00">
                   Register
                 </AuthButton>

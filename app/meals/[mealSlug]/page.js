@@ -5,13 +5,14 @@ import classes from './page.module.css';
 import styled from 'styled-components';
 // import {getMeal} from '@/lib/meals';
 import {notFound} from 'next/navigation';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import useFetchDocument from '@/customHooks/useFetchDocument';
 import {useEffect, useState} from 'react';
 import Link from 'next/link';
 import useFetchCollection from '@/customHooks/useFetchCollection';
 import Card from '@/components/card.js/card';
 import StarsRating from 'react-star-rate';
+import {selectUserEmail} from '@/redux/slice/authSlice';
 
 // export async function generateMetadata({params}) {
 //   const meal = getMeal(params.mealSlug);
@@ -38,8 +39,6 @@ const ReviewMessage = styled.p`
 `;
 
 export default function MealDetailsPage({params}) {
-  console.log('params', params);
-  // const {id} = useParams();
   const [meal, setMeal] = useState({});
   const dispatch = useDispatch();
   const {document} = useFetchDocument('meals', params.mealSlug);
@@ -47,6 +46,20 @@ export default function MealDetailsPage({params}) {
   const filteredReviews = data.filter(
     review => review.mealId === params.mealSlug
   );
+  const userEmail = useSelector(selectUserEmail);
+  const [display, setDisplay] = useState(true);
+  console.log('display', display);
+  useEffect(() => {
+    console.log('effect');
+    console.log('meal56', meal);
+    if (meal) {
+      if (meal?.email === userEmail) {
+        console.log('vlaga');
+        setDisplay(false);
+      }
+    }
+  }, [userEmail, meal]);
+  console.log('meal123', meal);
   // const {data} = useFetchCollection('reviews');
   // const filteredReviews = data.filter(review => review.productId === id);
 
@@ -72,7 +85,11 @@ export default function MealDetailsPage({params}) {
           </p>
           <p className={classes.summary}>{meal?.summary}</p>
           <div className={classes.ctaL}>
-            <Link href={`/review/${params.mealSlug}`}>Review Meal</Link>
+            {display ? (
+              <Link href={`/review/${params.mealSlug}`}>Review Meal</Link>
+            ) : (
+              ''
+            )}
           </div>
         </div>
       </header>
