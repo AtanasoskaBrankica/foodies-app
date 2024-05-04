@@ -5,13 +5,15 @@ import ImagePicker from '@/components/meals/image-picker';
 import classes from './page.module.css';
 import {shareMeal} from '@/lib/actions';
 import MealsFormSubmit from '@/components/meals/meals-form-submit';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import {useRouter} from 'next/navigation';
 import {toast} from 'react-toastify';
 import {getDownloadURL, ref, uploadBytesResumable} from 'firebase/storage';
 import {db, storage} from '@/firebase/config';
 import {Timestamp, addDoc, collection} from 'firebase/firestore';
+import {useSelector} from 'react-redux';
+import {selectUserEmail, selectUsername} from '@/redux/slice/authSlice';
 
 const initialState = {
   name: '',
@@ -47,10 +49,95 @@ const ProgressBar = styled.div`
 export default function ShareMealPage() {
   const [state, formAction] = useFormState(shareMeal, {message: null});
   const [meal, setMeal] = useState({...initialState});
+  const [emailError, setEmailError] = useState('');
+  const [titleError, setTitleError] = useState('');
+  const [summaryError, setSummaryError] = useState();
+  const [instructionsError, setInstructionsError] = useState('');
+  const [imageError, setImageError] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const userEmail = useSelector(selectUserEmail);
   console.log('meal===>', meal);
 
   const router = useRouter();
+
+  const getEmailDisplayName = email => {
+    // Split the email address into username and domain
+    const [username, domain] = email.split('@');
+
+    // Split the username by dot (.) and capitalize each part
+    const displayName = username
+      .split('.')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+
+    return displayName;
+  };
+
+  useEffect(() => {
+    if (userEmail) {
+      const userName = getEmailDisplayName(userEmail);
+      console.log('userName', userName);
+      setMeal({...meal, name: userName});
+    }
+  }, [userEmail]);
+
+  const validateEmail = () => {
+    if (!meal.email) {
+      setEmailError('Email is required');
+      return false;
+    } else {
+      setEmailError('');
+      return true;
+    }
+  };
+
+  const validateTitle = () => {
+    const titleRegex = /^[A-Za-z]+$/;
+    if (!meal.title) {
+      setTitleError('Title is required');
+      return false;
+    } else if (!titleRegex.test(meal.title)) {
+      setTitleError('Title contains only letters');
+      return false;
+    } else {
+      setTitleError('');
+      return true;
+    }
+  };
+
+  const validateSummary = () => {
+    const summaryRegex = /^[A-Za-z]+$/;
+    if (!meal.summary) {
+      setSummaryError('Summary is required');
+      return false;
+    } else if (!summaryRegex.test(meal.summary)) {
+      setSummaryError('Summary contains only letters');
+      return false;
+    } else {
+      setSummaryError('');
+      return true;
+    }
+  };
+
+  const validateInstructions = () => {
+    if (!meal.instructions) {
+      setInstructionsError('Instructions is required');
+      return false;
+    } else {
+      setInstructionsError('');
+      return true;
+    }
+  };
+
+  const validateImage = () => {
+    if (!meal.imageURL) {
+      setImageError('Image is required');
+      return false;
+    } else {
+      setImageError('');
+      return true;
+    }
+  };
 
   const handleInputChange = e => {
     const {name, value} = e.target;
@@ -83,25 +170,41 @@ export default function ShareMealPage() {
   const addMeal = e => {
     e.preventDefault();
 
-    try {
-      const docRef = addDoc(collection(db, 'meals'), {
-        name: meal.name,
-        email: meal.email,
-        title: meal.title,
-        summary: meal.summary,
-        instructions: meal.instructions,
-        imageURL: meal.imageURL,
-        createdAt: Timestamp.now().toDate(),
-      });
-      setUploadProgress(0);
-      setMeal({
-        ...initialState,
-      });
+    const isEmailValid = validateEmail();
+    const isTitleValid = validateTitle();
+    const isSummaryValid = validateSummary();
+    const isInstructionsValid = validateInstructions();
+    const isImageValid = validateImage();
 
-      toast.success('Meal uploaded successfully.');
-      router.push('/meals');
-    } catch (error) {
-      toast.error(error.message);
+    if (
+      !isEmailValid &&
+      !isTitleValid &&
+      !isSummaryValid &&
+      !isInstructionsValid &&
+      !isImageValid
+    ) {
+      return;
+    } else {
+      try {
+        const docRef = addDoc(collection(db, 'meals'), {
+          name: meal.name,
+          email: meal.email,
+          title: meal.title,
+          summary: meal.summary,
+          instructions: meal.instructions,
+          imageURL: meal.imageURL,
+          createdAt: Timestamp.now().toDate(),
+        });
+        setUploadProgress(0);
+        setMeal({
+          ...initialState,
+        });
+
+        toast.success('Meal uploaded successfully.');
+        router.push('/meals');
+      } catch (error) {
+        toast.error(error.message);
+      }
     }
   };
 
@@ -116,7 +219,7 @@ export default function ShareMealPage() {
       <main className={classes.main}>
         <form className={classes.form} onSubmit={addMeal}>
           <div className={classes.row}>
-            <p>
+            {/* <p>
               <label htmlFor="name">Your name</label>
               <input
                 type="text"
@@ -126,17 +229,28 @@ export default function ShareMealPage() {
                 value={meal.name}
                 onChange={handleInputChange}
               />
-            </p>
+            </p> */}
             <p>
               <label htmlFor="email">Your email</label>
               <input
                 type="email"
                 id="email"
                 name="email"
-                required
                 value={meal.email}
                 onChange={handleInputChange}
               />
+              {emailError !== '' && (
+                <p
+                  style={{
+                    margin: '0',
+                    color: 'red',
+
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {emailError}
+                </p>
+              )}
             </p>
           </div>
           <p>
@@ -145,10 +259,21 @@ export default function ShareMealPage() {
               type="text"
               id="title"
               name="title"
-              required
               value={meal.title}
               onChange={handleInputChange}
             />
+            {titleError !== '' && (
+              <p
+                style={{
+                  margin: '0',
+                  color: 'red',
+
+                  fontSize: '0.8rem',
+                }}
+              >
+                {titleError}
+              </p>
+            )}
           </p>
           <p>
             <label htmlFor="summary">Short Summary</label>
@@ -156,10 +281,21 @@ export default function ShareMealPage() {
               type="text"
               id="summary"
               name="summary"
-              required
               value={meal.summary}
               onChange={handleInputChange}
             />
+            {summaryError !== '' && (
+              <p
+                style={{
+                  margin: '0',
+                  color: 'red',
+
+                  fontSize: '0.8rem',
+                }}
+              >
+                {summaryError}
+              </p>
+            )}
           </p>
           <p>
             <label htmlFor="instructions">Instructions</label>
@@ -167,10 +303,21 @@ export default function ShareMealPage() {
               id="instructions"
               name="instructions"
               rows="10"
-              required
               value={meal.instructions}
               onChange={handleInputChange}
             ></textarea>
+            {instructionsError !== '' && (
+              <p
+                style={{
+                  margin: '0',
+                  color: 'red',
+
+                  fontSize: '0.8rem',
+                }}
+              >
+                {instructionsError}
+              </p>
+            )}
           </p>
           <p>
             <ProgressCard uploadProgress={uploadProgress}>
@@ -191,6 +338,18 @@ export default function ShareMealPage() {
                 name="image"
                 onChange={handleImageChange}
               />
+              {imageError !== '' && (
+                <p
+                  style={{
+                    margin: '0',
+                    color: 'red',
+
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {imageError}
+                </p>
+              )}
               {/* {meal.imageURL === '' ? null : (
                 <input
                   type="text"

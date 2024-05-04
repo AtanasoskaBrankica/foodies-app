@@ -2,8 +2,9 @@
   text-decoration: none;
   color: #ddd6cb;
   font-weight: bold;
-  padding: 0.5rem 1rem;
+  /* padding: 0.5rem 1rem; */
   border-radius: 0.5rem;
+  font-size: 1rem;
 }
 
 .link:hover,

@@ -92,6 +92,11 @@ export default function MainHeader() {
             </ShowOnLogout>
             <ShowOnLogin>
               <li>
+                <NavLink href="/myRecipes">My Recipes</NavLink>
+              </li>
+            </ShowOnLogin>
+            <ShowOnLogin>
+              <li>
                 <NavLink href="/" onClick={logoutUser}>
                   Logout
                 </NavLink>

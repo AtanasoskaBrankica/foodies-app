@@ -121,6 +121,9 @@ const Text = styled.p`
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  console.log('email error2', emailError);
   const router = useRouter();
   //   const [isLoading, setIsLoading] = useState(false);
   //   const previousURL = useSelector(selectPreviousURL);
@@ -134,22 +137,53 @@ const Login = () => {
   //       navigate('/');
   //     }
   //   };
+  const validateEmail = () => {
+    if (!email) {
+      setEmailError('Email is required');
+      return false;
+    } else {
+      setEmailError('');
+      return true;
+    }
+  };
+
+  const validatePassword = () => {
+    if (!password) {
+      setPasswordError('Password is required');
+      return false;
+    } else {
+      setPasswordError('');
+      return true;
+    }
+  };
 
   const loginHandler = event => {
     event.preventDefault();
-    // setIsLoading(true);
-    signInWithEmailAndPassword(auth, email, password)
-      .then(userCredential => {
-        toast.success('Login Successful!');
-        router.push('/');
-        setEmail('');
-        setPassword('');
-      })
-      .catch(error => {
-        toast.error(error.message);
-      });
+    const isEmailValid = validateEmail();
+    const isPasswordValid = validatePassword();
+    console.log('isEmailValid', isEmailValid);
+    console.log('isPasswordValid', isPasswordValid);
+    console.log('email error', emailError);
+    console.log('password error', passwordError);
 
-    // setIsLoading(false);
+    if (!isEmailValid && !isPasswordValid) {
+      console.log('greska');
+      return;
+    } else {
+      // setIsLoading(true);
+      console.log('LOGIN');
+      signInWithEmailAndPassword(auth, email, password)
+        .then(userCredential => {
+          toast.success('Login Successful!');
+          router.push('/');
+          setEmail('');
+          setPassword('');
+        })
+        .catch(error => {
+          toast.error(error.message);
+        });
+      // setIsLoading(false);
+    }
   };
 
   //   const provider = new GoogleAuthProvider();
@@ -181,15 +215,42 @@ const Login = () => {
                   placeholder="Email"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
-                  required
                 />
+                {emailError !== '' && (
+                  <p
+                    style={{
+                      margin: '0',
+                      color: 'red',
+
+                      fontSize: '0.8rem',
+                      marginTop: '-10px',
+                      paddingBottom: '5px',
+                    }}
+                  >
+                    {emailError}
+                  </p>
+                )}
                 <Input
                   type="password"
                   placeholder="Password"
-                  required
+                  // required
                   value={password}
                   onChange={event => setPassword(event.target.value)}
                 />
+                {passwordError !== '' && (
+                  <p
+                    style={{
+                      margin: '0',
+                      color: 'red',
+
+                      fontSize: '0.8rem',
+                      marginTop: '-10px',
+                      paddingBottom: '5px',
+                    }}
+                  >
+                    {passwordError}
+                  </p>
+                )}
                 <AuthButton type="submit" background="cornflowerblue">
                   Login
                 </AuthButton>
