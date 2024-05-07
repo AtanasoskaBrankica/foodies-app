@@ -47,6 +47,7 @@ export default function MealDetailsPage({params}) {
     review => review.mealId === params.mealSlug
   );
   const userEmail = useSelector(selectUserEmail);
+  const isLoggedIn = useSelector(state => state.auth.isLoggedIn);
   const [display, setDisplay] = useState(true);
   console.log('display', display);
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function MealDetailsPage({params}) {
           </p>
           <p className={classes.summary}>{meal?.summary}</p>
           <div className={classes.ctaL}>
-            {display ? (
+            {display && isLoggedIn ? (
               <Link href={`/review/${params.mealSlug}`}>Review Meal</Link>
             ) : (
               ''
