@@ -32,6 +32,8 @@ async function Meals() {
 }
 
 export default function MealsPage() {
+  const isLoggedIn = useSelector(state => state.auth.isLoggedIn);
+  console.log('isLogged', isLoggedIn);
   return (
     <>
       <header className={classes.header}>
@@ -42,9 +44,13 @@ export default function MealsPage() {
         <p>
           Choose your favorite recipe and cook it yourself. It is easy and fun!
         </p>
-        <p className={classes.cta}>
-          <Link href="/meals/share">Share Your Favorite Recipe</Link>
-        </p>
+        {!isLoggedIn ? (
+          ''
+        ) : (
+          <p className={classes.cta}>
+            <Link href="/meals/share">Share Your Favorite Recipe</Link>
+          </p>
+        )}
       </header>
       <main className={classes.main}>
         <Suspense
